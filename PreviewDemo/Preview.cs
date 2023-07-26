@@ -135,8 +135,13 @@ namespace PreviewDemo
 
             VideoCapture capture = new VideoCapture($"rtsp://{DVRUserName}:{DVRPassword}@{DVRIPAddress}/Streaming/Channels/1");
 
-            WebCamniYoqish(capture);
+            if (!capture.IsOpened())
+            {
+                MessageBox.Show("Failed to open video stream!");
+                return;
+            }
 
+            WebCamniYoqish(capture);
             return;
         }
 
