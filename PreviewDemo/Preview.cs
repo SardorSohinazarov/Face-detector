@@ -7,17 +7,19 @@ using System.Data;
 using System.Text;
 using System.IO;
 using System.Runtime.InteropServices;
+using OpenCvSharp;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using System.Windows.Media.Media3D;
 
 namespace PreviewDemo
 {	
 	public class Preview : System.Windows.Forms.Form
 	{
-      
-		private Int32 m_lUserID = -1;
+        private Int32 m_lUserID = -1;
 		private bool m_bInitSDK = false;
       
 		private Int32 m_lRealHandle = -1;
-       
+
         private string str;
 
         CHCNetSDK.REALDATACALLBACK RealData = null;
@@ -38,8 +40,9 @@ namespace PreviewDemo
 			else
 			{               
                 CHCNetSDK.NET_DVR_SetLogToFile(3, "C:\\SdkLog\\", true);
-			}			
-		}
+			}
+
+        }
 		protected override void Dispose( bool disposing )
 		{
 			if (m_lRealHandle >= 0)
@@ -110,7 +113,6 @@ namespace PreviewDemo
 		}		
 		private void btnLogin_Click(object sender, System.EventArgs e)
 		{
-			
             string DVRIPAddress = "192.168.0.22";
             Int16 DVRPortNumber = 8000;
             string DVRUserName = "admin";
@@ -126,11 +128,74 @@ namespace PreviewDemo
             lpPreviewInfo.bBlocked = true;
             lpPreviewInfo.dwDisplayBufNum = 1;
             lpPreviewInfo.byProtoType = 0;
-            lpPreviewInfo.byPreviewMode = 0;           
+            lpPreviewInfo.byPreviewMode = 0;
 
             IntPtr pUser = new IntPtr();
-            m_lRealHandle = CHCNetSDK.NET_DVR_RealPlay_V40(m_lUserID, ref lpPreviewInfo, null, pUser);          
-            return;        
-		}		        
+            m_lRealHandle = CHCNetSDK.NET_DVR_RealPlay_V40(m_lUserID, ref lpPreviewInfo, null, pUser);
+
+            VideoCapture capture = new VideoCapture($"rtsp://{DVRUserName}:{DVRPassword}@{DVRIPAddress}/Streaming/Channels/1");
+
+            WebCamniYoqish(capture);
+
+            return;
+        }
+
+        private void WebCamniYoqish(VideoCapture capture)
+        {
+            var cascade = new CascadeClassifier(@"D:\CameraCodi\Cam + Face (v_1) - Copy\1-Preview-PreviewDemo\PreviewDemo\Data\haarcascade_frontalface_alt.xml");
+            var nestedCascade = new CascadeClassifier(@"D:\CameraCodi\Cam + Face (v_1) - Copy\1-Preview-PreviewDemo\PreviewDemo\Data\haarcascade_eye.xml");
+            var color = Scalar.FromRgb(0, 255, 0);
+
+            using (Window window = new Window("Webcam"))
+            using (Mat srcImage = new Mat())
+            using (var grayImage = new Mat())
+            using (var detectedFaceGrayImage = new Mat())
+            {
+
+                while (capture.IsOpened())
+                {
+                    capture.Read(srcImage);
+
+                    Cv2.CvtColor(srcImage, grayImage, ColorConversionCodes.BGRA2GRAY);
+                    Cv2.EqualizeHist(grayImage, grayImage);
+
+                    var faces = cascade.DetectMultiScale(
+                        image: grayImage,
+                        minSize: new OpenCvSharp.Size(60, 60)
+                        );
+                    foreach (var faceRect in faces)
+                    {
+                        using (var detectedFaceImage = new Mat(srcImage, faceRect))
+                        {
+                            Cv2.Rectangle(srcImage, faceRect, color, 3);
+
+                            Cv2.CvtColor(detectedFaceImage, detectedFaceGrayImage, ColorConversionCodes.BGRA2GRAY);
+                            var nestedObjects = nestedCascade.DetectMultiScale(
+                                image: detectedFaceGrayImage,
+                                minSize: new OpenCvSharp.Size(30, 30)
+                                );
+
+                            foreach (var nestedObject in nestedObjects)
+                            {
+                                var center = new OpenCvSharp.Point
+                                {
+                                    X = (int)(Math.Round(nestedObject.X + nestedObject.Width * 0.5, MidpointRounding.ToEven) + faceRect.Left),
+                                    Y = (int)(Math.Round(nestedObject.Y + nestedObject.Height * 0.5, MidpointRounding.ToEven) + faceRect.Top)
+                                };
+                                var radius = Math.Round((nestedObject.Width + nestedObject.Height) * 0.25, MidpointRounding.ToEven);
+                                Cv2.Circle(srcImage, center, (int)radius, color, thickness: 2);
+                            }
+                        }
+                    }
+
+                    window.ShowImage(srcImage);
+                    int key = Cv2.WaitKey(1);
+                    if (key == 27)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
