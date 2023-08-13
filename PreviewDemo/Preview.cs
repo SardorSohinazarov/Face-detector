@@ -77,9 +77,9 @@ namespace PreviewDemo
             // btnLogin
             // 
             this.btnLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnLogin.Location = new System.Drawing.Point(323, 33);
+            this.btnLogin.Location = new System.Drawing.Point(402, 22);
             this.btnLogin.Name = "btnLogin";
-            this.btnLogin.Size = new System.Drawing.Size(135, 47);
+            this.btnLogin.Size = new System.Drawing.Size(162, 54);
             this.btnLogin.TabIndex = 1;
             this.btnLogin.Text = "Login";
             this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
@@ -87,16 +87,16 @@ namespace PreviewDemo
             // RealPlayWnd
             // 
             this.RealPlayWnd.BackColor = System.Drawing.SystemColors.WindowText;
-            this.RealPlayWnd.Location = new System.Drawing.Point(12, 186);
+            this.RealPlayWnd.Location = new System.Drawing.Point(6, 98);
             this.RealPlayWnd.Name = "RealPlayWnd";
-            this.RealPlayWnd.Size = new System.Drawing.Size(808, 614);
+            this.RealPlayWnd.Size = new System.Drawing.Size(970, 708);
             this.RealPlayWnd.TabIndex = 4;
             this.RealPlayWnd.TabStop = false;
             // 
             // Preview
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(842, 812);
+            this.AutoScaleBaseSize = new System.Drawing.Size(6, 15);
+            this.ClientSize = new System.Drawing.Size(988, 812);
             this.Controls.Add(this.RealPlayWnd);
             this.Controls.Add(this.btnLogin);
             this.Name = "Preview";
@@ -104,6 +104,7 @@ namespace PreviewDemo
             this.Text = "Preview";
             ((System.ComponentModel.ISupportInitialize)(this.RealPlayWnd)).EndInit();
             this.ResumeLayout(false);
+
 		}
 		#endregion		
 		[STAThread]
@@ -133,7 +134,8 @@ namespace PreviewDemo
             IntPtr pUser = new IntPtr();
             m_lRealHandle = CHCNetSDK.NET_DVR_RealPlay_V40(m_lUserID, ref lpPreviewInfo, null, pUser);
 
-            VideoCapture capture = new VideoCapture($"rtsp://{DVRUserName}:{DVRPassword}@{DVRIPAddress}/Streaming/Channels/1");
+            #region Hekvision kameraga ulash uchun shu codeni ochish kerak
+            /*VideoCapture capture = new VideoCapture($"rtsp://{DVRUserName}:{DVRPassword}@{DVRIPAddress}/Streaming/Channels/1");
 
             if (!capture.IsOpened())
             {
@@ -141,17 +143,84 @@ namespace PreviewDemo
                 return;
             }
 
-            WebCamniYoqish(capture);
+            HekvisionniYoqish(capture);
+            return;*/
+            #endregion
+
+            #region Komputer webcamerasiga ulanish uchun
+            WebCameraniYoqish();
             return;
+            #endregion
+
+
         }
 
-        private void WebCamniYoqish(VideoCapture capture)
+        private void HekvisionniYoqish(VideoCapture capture)
         {
             var cascade = new CascadeClassifier(@"D:\CameraCodi\Cam + Face (v_1) - Copy\1-Preview-PreviewDemo\PreviewDemo\Data\haarcascade_frontalface_alt.xml");
             var nestedCascade = new CascadeClassifier(@"D:\CameraCodi\Cam + Face (v_1) - Copy\1-Preview-PreviewDemo\PreviewDemo\Data\haarcascade_eye.xml");
             var color = Scalar.FromRgb(0, 255, 0);
 
             using (Window window = new Window("Webcam"))
+            using (Mat srcImage = new Mat())
+            using (var grayImage = new Mat())
+            using (var detectedFaceGrayImage = new Mat())
+            {
+
+                while (capture.IsOpened())
+                {
+                    capture.Read(srcImage);
+
+                    Cv2.CvtColor(srcImage, grayImage, ColorConversionCodes.BGRA2GRAY);
+                    Cv2.EqualizeHist(grayImage, grayImage);
+
+                    var faces = cascade.DetectMultiScale(
+                        image: grayImage,
+                        minSize: new OpenCvSharp.Size(60, 60)
+                        );
+                    foreach (var faceRect in faces)
+                    {
+                        using (var detectedFaceImage = new Mat(srcImage, faceRect))
+                        {
+                            Cv2.Rectangle(srcImage, faceRect, color, 3);
+
+                            Cv2.CvtColor(detectedFaceImage, detectedFaceGrayImage, ColorConversionCodes.BGRA2GRAY);
+                            var nestedObjects = nestedCascade.DetectMultiScale(
+                                image: detectedFaceGrayImage,
+                                minSize: new OpenCvSharp.Size(30, 30)
+                                );
+
+                            foreach (var nestedObject in nestedObjects)
+                            {
+                                var center = new OpenCvSharp.Point
+                                {
+                                    X = (int)(Math.Round(nestedObject.X + nestedObject.Width * 0.5, MidpointRounding.ToEven) + faceRect.Left),
+                                    Y = (int)(Math.Round(nestedObject.Y + nestedObject.Height * 0.5, MidpointRounding.ToEven) + faceRect.Top)
+                                };
+                                var radius = Math.Round((nestedObject.Width + nestedObject.Height) * 0.25, MidpointRounding.ToEven);
+                                Cv2.Circle(srcImage, center, (int)radius, color, thickness: 2);
+                            }
+                        }
+                    }
+
+                    window.ShowImage(srcImage);
+                    int key = Cv2.WaitKey(1);
+                    if (key == 27)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void WebCameraniYoqish()
+        {
+            var cascade = new CascadeClassifier(@"D:\CameraCodi\Cam + Face (v_1) - Copy\1-Preview-PreviewDemo\PreviewDemo\Data\haarcascade_frontalface_alt.xml");
+            var nestedCascade = new CascadeClassifier(@"D:\CameraCodi\Cam + Face (v_1) - Copy\1-Preview-PreviewDemo\PreviewDemo\Data\haarcascade_eye.xml");
+            var color = Scalar.FromRgb(0, 255, 0);
+
+            using (Window window = new Window("Webcam"))
+            using (VideoCapture capture = new VideoCapture(0))
             using (Mat srcImage = new Mat())
             using (var grayImage = new Mat())
             using (var detectedFaceGrayImage = new Mat())

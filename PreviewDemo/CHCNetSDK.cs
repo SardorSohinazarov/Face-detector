@@ -8,11 +8,8 @@ namespace PreviewDemo
     public class CHCNetSDK
     {
         public CHCNetSDK()
-        {
-            //
-            // TODO: 在此处添加构造函数逻辑
-            //
-        }
+        {        }
+
         public class NET_DVR_SMART_SEARCH_COND
         {
             public uint dwSize;
