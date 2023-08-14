@@ -26,7 +26,6 @@ namespace PreviewDemo
         public CHCNetSDK.NET_DVR_PTZPOS m_struPtzCfg;
 
 		private System.Windows.Forms.Button btnLogin;
-		private System.Windows.Forms.PictureBox RealPlayWnd;        
         private System.ComponentModel.Container components = null;
 		public Preview()
 		{			
@@ -70,39 +69,26 @@ namespace PreviewDemo
 		private void InitializeComponent()
         {
             this.btnLogin = new System.Windows.Forms.Button();
-            this.RealPlayWnd = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.RealPlayWnd)).BeginInit();
             this.SuspendLayout();
             // 
             // btnLogin
             // 
             this.btnLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnLogin.Location = new System.Drawing.Point(402, 22);
+            this.btnLogin.Location = new System.Drawing.Point(293, 60);
             this.btnLogin.Name = "btnLogin";
             this.btnLogin.Size = new System.Drawing.Size(162, 54);
             this.btnLogin.TabIndex = 1;
             this.btnLogin.Text = "Login";
             this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
             // 
-            // RealPlayWnd
-            // 
-            this.RealPlayWnd.BackColor = System.Drawing.SystemColors.WindowText;
-            this.RealPlayWnd.Location = new System.Drawing.Point(6, 98);
-            this.RealPlayWnd.Name = "RealPlayWnd";
-            this.RealPlayWnd.Size = new System.Drawing.Size(970, 708);
-            this.RealPlayWnd.TabIndex = 4;
-            this.RealPlayWnd.TabStop = false;
-            // 
             // Preview
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(6, 15);
-            this.ClientSize = new System.Drawing.Size(988, 812);
-            this.Controls.Add(this.RealPlayWnd);
+            this.ClientSize = new System.Drawing.Size(759, 198);
             this.Controls.Add(this.btnLogin);
             this.Name = "Preview";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Preview";
-            ((System.ComponentModel.ISupportInitialize)(this.RealPlayWnd)).EndInit();
             this.ResumeLayout(false);
 
 		}
@@ -122,7 +108,7 @@ namespace PreviewDemo
             m_lUserID = CHCNetSDK.NET_DVR_Login_V30(DVRIPAddress, DVRPortNumber, DVRUserName, DVRPassword, ref DeviceInfo);
 
             CHCNetSDK.NET_DVR_PREVIEWINFO lpPreviewInfo = new CHCNetSDK.NET_DVR_PREVIEWINFO();
-            lpPreviewInfo.hPlayWnd = RealPlayWnd.Handle;
+            //lpPreviewInfo.hPlayWnd = RealPlayWnd.Handle;
             lpPreviewInfo.lChannel = 1;
             lpPreviewInfo.dwStreamType = 0;
             lpPreviewInfo.dwLinkMode = 0;
